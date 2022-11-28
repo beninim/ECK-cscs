@@ -4,9 +4,8 @@ metadata:
   name: kibana-ingress
   annotations: 
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-  namespace: cluster1
-  annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+  namespace: cluster1
 spec:
   ingressClassName: nginx
   rules:
