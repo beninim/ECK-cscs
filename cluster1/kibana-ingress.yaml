@@ -15,7 +15,7 @@ spec:
           service:
             name: kibana-cluster1-kb-http
             port:
-              number: 80
+              number: 5601
         path: /
         pathType: Prefix
   tls:
