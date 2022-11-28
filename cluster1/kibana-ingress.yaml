@@ -18,3 +18,7 @@ spec:
             name: kibana-cluster1-kb-http
             port:
               number: 5601
+  tls:
+  - hosts:
+    - kibana-cluster1.hela.hack2022.ch
+    secretName: kibana-cluster1-tls
