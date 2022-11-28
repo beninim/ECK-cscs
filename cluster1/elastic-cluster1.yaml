@@ -1,0 +1,43 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: cluster1
+  namespace: cluster1
+spec:
+  version: 8.5.0
+  nodeSets:
+
+  - name: masters
+    count: 3
+    podTemplate:
+      spec:
+        containers:
+        - name: elasticsearch
+          env:
+          - name: ES_JAVA_OPTS
+            value: -Xms512m -Xmx512m
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 2
+            limits:
+              memory: 1Gi
+    config:
+      node.roles: ["master"]
+      node.store.allow_mmap: false
+
+  - name: data
+    count: 2
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: harvester
+    config:
+      node.roles: ["data", "ingest", "transform"]
+      node.store.allow_mmap: false
