@@ -5,6 +5,6 @@ metadata:
   namespace: cluster1
 spec:
   version: 8.5.2
-  count: 3
+  count: 1
   elasticsearchRef:
     name: cluster1
