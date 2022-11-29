@@ -1,65 +1,67 @@
-podAnnotations:
-  co.elastic.logs/enabled: true
-  co.elastic.logs/module: "logstash"
+values: |
+  imageTag: "8.5.1"
+  podAnnotations:
+    co.elastic.logs/enabled: true
+    co.elastic.logs/module: "logstash"
 
-persistence:
-  enabled: true
+  persistence:
+    enabled: true
 
-logstashConfig:
-  logstash.yml: |
-    http.host: 0.0.0.0
-    pipeline.ecs_compatibility: v1
+  logstashConfig:
+    logstash.yml: |
+      http.host: 0.0.0.0
+      pipeline.ecs_compatibility: v1
 
-logstashPipeline:
-   logstash.conf: |
-    input {
-        exec {
-          command => "uptime"
-          interval => 30
-        }
-    }
-    
-    output {
-      elasticsearch {
-        hosts => '${ELASTICSEARCH_HOSTS}'
-        data_stream => true
-        data_stream_type => "logs"
-        data_stream_dataset => "alps"
-        data_stream_namespace => "nodes"
-        user => '${ELASTICSEARCH_USERNAME}'
-        password => '${ELASTICSEARCH_PASSWORD}'
+  logstashPipeline:
+    logstash.conf: |
+      input {
+          exec {
+            command => "uptime"
+            interval => 30
+          }
       }
-    }
+      
+      output {
+        elasticsearch {
+          hosts => '${ELASTICSEARCH_HOSTS}'
+          data_stream => true
+          data_stream_type => "logs"
+          data_stream_dataset => "alps"
+          data_stream_namespace => "nodes"
+          user => '${ELASTICSEARCH_USERNAME}'
+          password => '${ELASTICSEARCH_PASSWORD}'
+        }
+      }
 
-# Request smaller persistent volumes.
-volumeClaimTemplate:
-  accessModes: [ "ReadWriteOnce" ]
+  # Request smaller persistent volumes.
+  volumeClaimTemplate:
+    accessModes: [ "ReadWriteOnce" ]
+    resources:
+      requests:
+        storage: 3G
+
+  logstashJavaOpts: "-Xmx8g -Xms8g"
+
   resources:
     requests:
-      storage: 3G
+      cpu: "2"
+      memory: "1G"
+    limits:
+      cpu: "2"
+      memory: "1G"
 
-logstashJavaOpts: "-Xmx8g -Xms8g"
+  replicas: 1
 
-resources:
-  requests:
-    cpu: "2"
-    memory: "1G"
-  limits:
-    cpu: "2"
-    memory: "1G"
-
-replicas: 1
-
-extraEnvs:
-  - name: 'ELASTICSEARCH_USERNAME'
-    valueFrom:
-      secretKeyRef:
-        name: elastic-credentials-cluster2
-        key: username
-  - name: 'ELASTICSEARCH_PASSWORD'
-    valueFrom:
-      secretKeyRef:
-        name: elastic-credentials-cluster2
-        key: password
-  - name: ELASTICSEARCH_HOSTS
-    value: http://cluster2-es-http:9200
+  extraEnvs:
+    - name: 'ELASTICSEARCH_USERNAME'
+      valueFrom:
+        secretKeyRef:
+          name: elastic-credentials-cluster2
+          key: username
+    - name: 'ELASTICSEARCH_PASSWORD'
+      valueFrom:
+        secretKeyRef:
+          name: elastic-credentials-cluster2
+          key: password
+    - name: ELASTICSEARCH_HOSTS
+      value: http://cluster2-es-http:9200
