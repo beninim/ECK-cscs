@@ -1,5 +1,5 @@
 values: |
-  imageTag: "8.5.0"
+  imageTag: "8.5.1"
   podAnnotations:
     co.elastic.logs/enabled: true
     co.elastic.logs/module: "logstash"

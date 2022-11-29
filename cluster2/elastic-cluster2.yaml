@@ -12,9 +12,12 @@ metadata:
   name: cluster2
   namespace: cluster2
 spec:
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
   version: 8.5.0
   nodeSets:
-
   - name: masters
     count: 3
     podTemplate:
