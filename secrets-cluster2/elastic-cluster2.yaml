@@ -5,5 +5,5 @@ metadata:
   namespace: cluster2
 type: Opaque
 data:
-  ELASTICSEARCH_USERNAME: ZWxhc3RpYwo=
-  ELASTICSEARCH_PASSWORD: NmdXMEFXMGQxcDkyQzF3QzdWWU0zRTVx
+  username: ZWxhc3RpYwo=
+  password: NmdXMEFXMGQxcDkyQzF3QzdWWU0zRTVx

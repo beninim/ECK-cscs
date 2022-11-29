@@ -40,7 +40,7 @@ values: |
       requests:
         storage: 3G
 
-  logstashJavaOpts: "-Xmx8g -Xms8g"
+  logstashJavaOpts: "-Xmx512m -Xms512m"
 
   resources:
     requests:
