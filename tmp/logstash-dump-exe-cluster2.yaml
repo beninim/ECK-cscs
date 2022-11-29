@@ -20,7 +20,7 @@ spec:
           values: |-
             {{values}}
         repoURL: https://helm.elastic.co
-        targetRevision: 8.5.1
+        targetRevision: 8.5.0
         chart: logstash
       destination:
         server: 'https://kubernetes.default.svc'
