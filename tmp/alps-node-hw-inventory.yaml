@@ -1,0 +1,225 @@
+# helm uninstall prod-alps-nodes-hw-inventory -n sole-prod
+# helm upgrade --install prod-alps-nodes-hw-inventory --set imageTag=7.17.3 --namespace sole-prod elastic/logstash -f ./logstash-alps-nodes-hw-inventory.yaml
+podAnnotations:
+  co.elastic.logs/enabled: true
+  co.elastic.logs/module: "logstash"
+
+persistence:
+  enabled: true
+
+logstashConfig:
+  logstash.yml: |
+    http.host: 0.0.0.0
+    pipeline.ecs_compatibility: v1
+
+logstashPipeline:
+   logstash.conf: |
+    input {
+        file {
+            codec => "json"
+            path => [
+                    "/<TODO-PATH>/node-status-input.json"
+                ]
+            start_position => "beginning"
+        }
+    }
+    # input {
+    #   redis {
+    #     id => "alps-nodes-hw-inventory-redis-listener"
+    #     host => "redis-logstash-replicas"
+    #     key => "alps-nodes-hw-inventory"
+    #     data_type => "channel"
+    #   }
+    # }
+    filter {
+      json {
+        source => "message"
+      }
+      # Start preparing the json by request context in order to have a mutal json pattern
+      if [Request][Context] == "State" {
+          mutate {
+              rename => ["[Request][Response][Components]", "Entry"]
+          }
+      } else if [Request][Context] == "Inventory" {
+          mutate {
+              rename => ["[Request][Response]", "Entry"]
+          }
+      } else if [Request][Context] == "Group" {
+          mutate {
+              rename => ["[Request][Response]", "Entry"]
+          }
+      } else if [Request][Context] == "Config" {
+          if [Request][Response][1] { 
+              mutate { 
+                  remove_field => "[Request][Response][1]" 
+              } 
+          }
+          mutate {
+              rename => ["[Request][Response]", "Entry"]
+          }
+      }
+      # Split through the entries
+      split {
+          field => "[Entry]"
+      }
+      # Use the request date time as @timestamp for ES
+      date {
+          match => ["[Request][Timestamp]", "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", "yyyy-MM-dd'T'HH:mm:ss'Z'"]
+          target => "@timestamp"
+      }
+      # Force the id to be a string
+      if [Request][Context] != "Config" {
+          mutate {
+              convert => {
+                  "[Entry][ID]" => "string"
+              }
+          }
+          mutate {
+              rename => ["[Entry][ID]", "[Entry][Id]"]
+          }
+      }
+      
+      # Differentiate by request context
+      if [Request][Context] == "Inventory" {
+          if [Entry][Type] and [Entry][Type] == "Memory" {
+              mutate { 
+                  add_field => {"[Request][Type]" => "Memory"} 
+              }
+          } else if [Entry][Type] and [Entry][Type] == "NodeAccel" {
+              mutate { 
+                  add_field => {"[Request][Type]" => "NodeAccel"} 
+              }
+          } else if [Entry][Type] and [Entry][Type] == "Node" {
+              mutate { 
+                  add_field => {"[Request][Type]" => "Node"} 
+              }
+          } else if [Entry][Type] and [Entry][Type] == "Processor" {
+              mutate { 
+                  add_field => {"[Request][Type]" => "Processor"} 
+              }
+          }
+      } else if [Request][Context] == "State" {
+          mutate {
+              convert => {
+                  "[Entry][Enabled]" => "boolean"
+              }
+          }
+          if [Entry][Type] and [Entry][Type] == "ComputeModule" {
+              mutate { 
+                  add_field => {"[Request][Type]" => "Blade"} 
+              }
+          } else if [Entry][Type] and [Entry][Type] == "Node" {
+              mutate { 
+                  add_field => {"[Request][Type]" => "Node"} 
+              }
+          }
+      } else if [Request][Context] == "Group" {
+          mutate { 
+              add_field => {"[Request][Type]" => "Member"} 
+          }
+          split {
+              field => "[Entry][members][ids]"
+          }
+          mutate {
+              rename => ["[Entry][members]", "[Entry][Member]"]
+          }
+          mutate {
+              rename => ["[Entry][Member][ids]", "[Entry][Member][Id]"]
+          }
+          mutate {
+              rename => ["[Entry][description]", "[Entry][Description]"]
+              rename => ["[Entry][label]", "[Entry][Label]"]
+          }
+      } else if [Request][Context] == "Config" {
+          mutate { 
+              add_field => {"[Request][Type]" => "ConfigMember"} 
+          }
+          split {
+              field => "[Entry][contents]"
+          }
+          split {
+              field => "[Entry][contents][contents]"
+          }
+          mutate {
+              rename => ["[Entry][contents][contents]", "[Entry][Member]"]
+          }
+          mutate {
+              rename => ["[Entry][contents][name]", "[Entry][Label]"]
+          }
+          mutate {
+              rename => ["[Entry][Member][name]", "[Entry][Member][Id]"]
+          }
+          mutate {
+              remove_field => ["[Entry][Member][type]"]
+              remove_field => ["[Entry][type]"]
+              remove_field => ["[Entry][contents]"]
+              remove_field => ["[Entry][name]"]
+          }
+      }
+      # Clean
+      mutate {
+          remove_field => ["[Request][Response]"]
+          remove_field => ["[event][original]"]
+          remove_field => ["message"]
+      }
+    }
+    
+    output {
+    #   stdout { codec => rubydebug { metadata => true } }
+
+      elasticsearch {
+        hosts => '${ELASTICSEARCH_HOSTS}'
+        data_stream => true
+        data_stream_type => "logs"
+        data_stream_dataset => "alps"
+        data_stream_namespace => "nodes"
+        user => '${ELASTICSEARCH_USERNAME}'
+        password => '${ELASTICSEARCH_PASSWORD}'
+      }
+    }
+
+# Request smaller persistent volumes.
+volumeClaimTemplate:
+  accessModes: [ "ReadWriteOnce" ]
+  storageClassName: "rook-ceph-block"
+  resources:
+    requests:
+      storage: 30G
+
+logstashJavaOpts: "-Xmx8g -Xms8g"
+
+resources:
+  requests:
+    cpu: "6"
+    memory: "16G"
+  limits:
+    cpu: "6"
+    memory: "16G"
+
+replicas: 1
+
+service:
+ type: ClusterIP
+ ports:
+   - name: tcp-beat
+     port: 5044
+     protocol: TCP
+     targetPort: 5044
+   - name: tcp-monitoring
+     port: 9600
+     protocol: TCP
+     targetPort: 9600
+
+extraEnvs:
+  - name: 'ELASTICSEARCH_USERNAME'
+    valueFrom:
+      secretKeyRef:
+        name: elastic-credentials
+        key: username
+  - name: 'ELASTICSEARCH_PASSWORD'
+    valueFrom:
+      secretKeyRef:
+        name: elastic-credentials
+        key: password
+  - name: ELASTICSEARCH_HOSTS
+    value: http://great-sole-client:9200
