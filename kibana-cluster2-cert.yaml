@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kibana-cluster2-cert
+  namespace: cluster2
+spec:
+  commonName: kibana-cluster2.hela.hack2022.ch
+  dnsNames:
+  - kibana-cluster2.hela.hack2022.ch
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt
+  secretName: kibana-cluster2-tls
+

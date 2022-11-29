@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana-ingress2
+  annotations: 
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  namespace: cluster2
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: kibana-cluster2.hela.hack2022.ch
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kibana-cluster2-kb-http
+            port:
+              number: 5601
+  tls:
+  - hosts:
+    - kibana-cluster2.hela.hack2022.ch
+    secretName: kibana-cluster2-tls
