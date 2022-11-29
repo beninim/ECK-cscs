@@ -53,12 +53,12 @@ values: |
   replicas: 1
 
   extraEnvs:
-    - name: 'ELASTICSEARCH_USERNAME'
+    - name: ELASTICSEARCH_USERNAME
       valueFrom:
         secretKeyRef:
           name: elastic-credentials-cluster2
           key: username
-    - name: 'ELASTICSEARCH_PASSWORD'
+    - name: ELASTICSEARCH_PASSWORD
       valueFrom:
         secretKeyRef:
           name: elastic-credentials-cluster2
