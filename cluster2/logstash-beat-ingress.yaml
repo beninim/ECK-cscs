@@ -18,7 +18,7 @@ spec:
           service:
             name: logstash-beat-cluster2-logstash-headless 
             port:
-              number: 9600
+              number: 5044
   tls:
   - hosts:
     - log.hela.hack2022.ch

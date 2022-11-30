@@ -4,6 +4,8 @@ values: |
     co.elastic.logs/enabled: true
     co.elastic.logs/module: "logstash"
 
+  httpPort: 5044
+
   persistence:
     enabled: true
 
