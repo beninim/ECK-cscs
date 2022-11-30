@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: logstash-dump-exe-cluster2
+  name: logstash-beat-cluster2
   namespace: argocd 
 spec:
   generators:
@@ -9,10 +9,10 @@ spec:
       repoURL: https://github.com/beninim/ECK-cscs.git
       revision: HEAD 
       files:
-      - path: 'logstash2/dump-exe.yaml'
+      - path: 'values/logstash-beat.yaml'
   template:
     metadata:
-      name: logstash-dump-exe-cluster2
+      name: logstash-beat-cluster2
     spec:
       project: default
       source:
