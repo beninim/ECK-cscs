@@ -23,9 +23,12 @@ spec:
       min.insync.replicas: 1
       inter.broker.protocol.version: "3.3"
     storage:
-      type: persistent-claim
-      size: 10Gi
-      deleteClaim: false
+     type: jbod
+     volumes:
+     - id: 0
+       type: persistent-claim
+       size: 10Gi
+       deleteClaim: false
   zookeeper:
     replicas: 1
     storage:
