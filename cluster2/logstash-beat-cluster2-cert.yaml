@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: logstash-beat-cluster2-cert
+  namespace: cluster2
+spec:
+  commonName: log.hela.hack2022.ch
+  dnsNames:
+  - log.hela.hack2022.ch
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt
+  secretName: logstash-beat-cluster2-tls
+

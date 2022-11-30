@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: logstash-beat-ingress2
+  annotations: 
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  namespace: cluster2
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: log.hela.hack2022.ch
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: logstash-beat-cluster2-logstash-headless 
+            port:
+              number: 9600
+  tls:
+  - hosts:
+    - log.hela.hack2022.ch
+    secretName: logstash-beat-cluster2-tls
